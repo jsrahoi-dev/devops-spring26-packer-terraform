@@ -16,7 +16,6 @@ data "amazon-ami" "amazon_linux_2023" {
   }
   most_recent = true
   owners      = ["amazon"]
-  region      = var.aws_region
 }
 
 # Local variables
@@ -34,12 +33,12 @@ source "amazon-ebs" "amazon_linux" {
   ami_name      = local.ami_name
 
   tags = {
-    Name        = local.ami_name
-    Created     = timestamp()
-    Builder     = "Packer"
-    Purpose     = "DevOps Spring 2026 Assignment"
-    BaseOS      = "Amazon Linux 2023"
-    HasDocker   = "true"
+    Name      = local.ami_name
+    Created   = timestamp()
+    Builder   = "Packer"
+    Purpose   = "DevOps Spring 2026 Assignment"
+    BaseOS    = "Amazon Linux 2023"
+    HasDocker = "true"
   }
 }
 
