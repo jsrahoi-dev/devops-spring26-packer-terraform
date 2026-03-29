@@ -1,0 +1,109 @@
+{
+  "bastion_instance_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "i-0ff697d0e096d0389"
+  },
+  "bastion_public_dns": {
+    "sensitive": false,
+    "type": "string",
+    "value": "ec2-3-215-135-8.compute-1.amazonaws.com"
+  },
+  "bastion_public_ip": {
+    "sensitive": false,
+    "type": "string",
+    "value": "3.215.135.8"
+  },
+  "detected_my_ip": {
+    "sensitive": false,
+    "type": "string",
+    "value": "67.180.173.226"
+  },
+  "private_instance_ids": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string",
+        "string",
+        "string",
+        "string",
+        "string",
+        "string"
+      ]
+    ],
+    "value": [
+      "i-0c97bb3648fe0b169",
+      "i-0bc11957f03383b1f",
+      "i-0476424c880178776",
+      "i-067bf5c177b5410a6",
+      "i-0a5735da83e0c2708",
+      "i-0adf496d5a1b5f752"
+    ]
+  },
+  "private_instance_ips": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string",
+        "string",
+        "string",
+        "string",
+        "string",
+        "string"
+      ]
+    ],
+    "value": [
+      "10.0.101.191",
+      "10.0.102.27",
+      "10.0.101.95",
+      "10.0.102.231",
+      "10.0.101.221",
+      "10.0.102.33"
+    ]
+  },
+  "private_subnet_ids": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string",
+        "string"
+      ]
+    ],
+    "value": [
+      "subnet-0d50d8238db2eec84",
+      "subnet-0844ae5a970dd6070"
+    ]
+  },
+  "public_subnet_ids": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string",
+        "string"
+      ]
+    ],
+    "value": [
+      "subnet-084a571dbc99f5f14",
+      "subnet-01a14b0012e3f5f24"
+    ]
+  },
+  "ssh_config_snippet": {
+    "sensitive": false,
+    "type": "string",
+    "value": "# Add to ~/.ssh/config\nHost devops-spring26-bastion\n  HostName 3.215.135.8\n  User ec2-user\n  IdentityFile ~/.ssh/id_ed25519_jsrahoi-dev\n\nHost devops-spring26-private-*\n  User ec2-user\n  IdentityFile ~/.ssh/id_ed25519_jsrahoi-dev\n  ProxyJump devops-spring26-bastion\n"
+  },
+  "ssh_connection_command": {
+    "sensitive": false,
+    "type": "string",
+    "value": "ssh -i ~/.ssh/id_ed25519_jsrahoi-dev ec2-user@3.215.135.8"
+  },
+  "vpc_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "vpc-08a56eb76b1c4a09a"
+  }
+}
