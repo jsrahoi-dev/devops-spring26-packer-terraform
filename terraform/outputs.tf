@@ -49,7 +49,7 @@ output "ssh_connection_command" {
 
 output "ssh_config_snippet" {
   description = "SSH config snippet for easy access"
-  value = <<-EOT
+  value       = <<-EOT
     # Add to ~/.ssh/config
     Host ${var.project_name}-bastion
       HostName ${aws_instance.bastion.public_ip}
