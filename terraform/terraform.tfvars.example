@@ -1,0 +1,9 @@
+# REQUIRED: AMI ID from Packer build
+# Replace with your actual AMI ID from 'packer build' output
+ami_id = "ami-0123456789abcdef0"
+
+# OPTIONAL: Override defaults if needed
+# aws_region             = "us-east-1"
+# instance_type          = "t2.micro"
+# private_instance_count = 6
+# my_ip                  = "1.2.3.4"  # Leave commented to auto-detect
