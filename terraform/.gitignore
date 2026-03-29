@@ -2,11 +2,14 @@
 *.tfstate
 *.tfstate.*
 .terraform/
-.terraform.lock.hcl
 
 # Variable files with sensitive data
 terraform.tfvars
 *.auto.tfvars
+
+# Plan files
+tfplan
+*.tfplan
 
 # Crash logs
 crash.log
