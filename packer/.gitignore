@@ -1,0 +1,7 @@
+# Packer cache
+packer_cache/
+crash.log
+
+# Build artifacts
+output-*/
+*.box
