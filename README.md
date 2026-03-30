@@ -58,18 +58,30 @@ VPC (10.0.0.0/16)
 ```
 devops-spring26-packer-terraform/
 ├── packer/
-│   ├── variables.pkr.hcl      # Packer variable definitions
-│   ├── docker-ami.pkr.hcl     # Main Packer template
-│   └── packer.auto.pkrvars.hcl # Auto-loaded variable values
+│   ├── variables.pkr.hcl          # Packer variable definitions
+│   ├── amazon-linux-docker.pkr.hcl # Main Packer template
+│   └── packer-manifest.json       # Build manifest with AMI ID
 ├── terraform/
-│   ├── variables.tf           # Terraform variable definitions
-│   ├── vpc.tf                 # VPC and networking resources
-│   ├── security_groups.tf     # Security group configurations
-│   ├── main.tf                # EC2 instances and main resources
-│   ├── outputs.tf             # Output values
-│   └── terraform.tfvars       # Variable values (created after Packer build)
-├── screenshots/               # AWS Console screenshots
-└── README.md                  # This file
+│   ├── variables.tf               # Terraform variable definitions
+│   ├── vpc.tf                     # VPC and networking resources
+│   ├── security_groups.tf         # Security group configurations
+│   ├── main.tf                    # EC2 instances and main resources
+│   ├── outputs.tf                 # Output values
+│   └── terraform.tfvars           # Variable values (created after Packer build)
+├── docs/
+│   ├── screenshots/               # AWS Console and terminal screenshots
+│   │   ├── 01-ami-console.png    # Custom AMI in AWS console
+│   │   ├── 02-aws-vpc.png        # VPC configuration
+│   │   ├── 03-aws-subnets.png    # Subnet layout
+│   │   ├── 04-aws-instances.png  # EC2 instances
+│   │   ├── 05-aws-security-groups.png # Security groups
+│   │   ├── 06-bastion-ssh.png    # Bastion SSH connection
+│   │   ├── 07-private-ssh.png    # Private instance SSH
+│   │   └── 08-all-private-ips.png # All instances tested
+│   └── superpowers/               # Design specs and implementation plans
+├── README.md                      # This file
+├── VERIFICATION.md                # Infrastructure verification report
+└── CLEANUP.md                     # Resource cleanup instructions
 ```
 
 ## Setup Instructions
@@ -182,27 +194,55 @@ docker ps
 
 Verify your infrastructure in the AWS Console:
 
-1. **EC2 Dashboard**
-   - Navigate to EC2 → Instances
-   - Verify 7 instances running (1 bastion + 6 private)
-   - Check instance states and IPs
+### 1. AMI Management
+   - Navigate to EC2 → AMIs
+   - Verify your custom AMI is available
+   - Check AMI name and creation date
 
-2. **VPC Dashboard**
+![AMI Console - AMI Details](docs/screenshots/01-ami-console.png)
+*Custom Amazon Linux 2023 AMI with Docker pre-installed*
+
+![AMI Console - AMI List](docs/screenshots/01a-ami-console-list.png)
+*AMI visible in console with all tags*
+
+### 2. VPC Dashboard
    - Navigate to VPC → Your VPCs
    - Verify VPC with correct CIDR block
    - Check subnets (2 public + 2 private)
    - Verify route tables and associations
    - Check Internet Gateway and NAT Gateway
 
-3. **AMI Management**
-   - Navigate to EC2 → AMIs
-   - Verify your custom AMI is available
-   - Check AMI name and creation date
+![VPC Dashboard](docs/screenshots/02-aws-vpc.png)
+*VPC configuration with 10.0.0.0/16 CIDR block*
 
-4. **Security Groups**
+### 3. Subnets Configuration
+   - Verify 2 public subnets (10.0.1.0/24, 10.0.2.0/24)
+   - Verify 2 private subnets (10.0.101.0/24, 10.0.102.0/24)
+
+![Subnets View](docs/screenshots/03-aws-subnets.png)
+*Public and private subnets across 2 availability zones*
+
+### 4. EC2 Instances
+   - Navigate to EC2 → Instances
+   - Verify 7 instances running (1 bastion + 6 private)
+   - Check instance states and IPs
+
+![EC2 Instances](docs/screenshots/04-aws-instances.png)
+*1 bastion host in public subnet and 6 private instances*
+
+### 5. Security Groups
    - Navigate to EC2 → Security Groups
    - Verify bastion and private security groups
    - Review inbound/outbound rules
+
+![Security Groups Overview](docs/screenshots/05-aws-security-groups.png)
+*Bastion and private security groups*
+
+![Bastion Security Group Rules](docs/screenshots/05a-aws-security-group1.png)
+*Bastion SG - SSH from specific IP only*
+
+![Private Security Group Rules](docs/screenshots/05a-aws-security-group2.png)
+*Private SG - SSH from bastion only*
 
 ## SSH Configuration Details
 
@@ -283,6 +323,9 @@ ssh -i ~/.ssh/your-key -J ec2-user@<bastion-ip> ec2-user@10.0.101.X "echo 'Priva
 ssh -i ~/.ssh/your-key -J ec2-user@<bastion-ip> ec2-user@10.0.101.X "docker --version"
 ```
 
+![Bastion SSH Connection](docs/screenshots/06-bastion-ssh.png)
+*Successfully connected to bastion host with Docker verification*
+
 ### Verify All Private Instances
 
 Test connectivity to all 6 private instances (3 in each AZ):
@@ -297,6 +340,15 @@ for ip in $(terraform output -json private_instance_ips | jq -r '.[]'); do
   ssh -i ~/.ssh/your-key -J ec2-user@<bastion-ip> ec2-user@$ip "hostname && docker --version"
 done
 ```
+
+![Private Instance SSH Connection](docs/screenshots/07-private-ssh.png)
+*Connected to private instance via bastion and verified Docker*
+
+![Private Instance Details](docs/screenshots/07a-private-ssh.png)
+*Additional private instance connectivity verification*
+
+![All Private Instance IPs](docs/screenshots/08-all-private-ips.png)
+*All 6 private instances accessible and tested*
 
 ## Terraform Commands Reference
 
