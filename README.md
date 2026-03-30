@@ -2,6 +2,31 @@
 
 Complete infrastructure-as-code solution using Packer to build custom AMIs and Terraform to deploy AWS infrastructure.
 
+## Assignment Requirements
+
+This project fulfills all requirements for the DevOps Spring 2026 Packer & Terraform assignment:
+
+✅ **Custom AWS AMI** - Built with Packer containing:
+- Amazon Linux 2023 (latest)
+- Docker pre-installed and enabled
+- SSH public key embedded for authentication
+
+✅ **Terraform Infrastructure** - Provisioned using official modules:
+- VPC with public and private subnets across 2 availability zones
+- All necessary routes (Internet Gateway for public subnets, no NAT Gateway)
+- 1 bastion host in public subnet (SSH access restricted to specific IP)
+- 6 EC2 instances in private subnets using the custom AMI
+- Security groups implementing least-privilege access
+
+✅ **Documentation** - Comprehensive README with:
+- Complete setup and usage instructions
+- Architecture diagrams and network design
+- AWS Console screenshots showing deployed infrastructure
+- SSH connection examples and verification steps
+- Troubleshooting guide and cleanup instructions
+
+✅ **GitHub Repository** - All code committed with jsrahoi-dev profile
+
 ## Project Overview
 
 This project demonstrates:
