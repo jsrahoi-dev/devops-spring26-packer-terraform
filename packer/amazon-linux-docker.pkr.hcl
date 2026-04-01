@@ -81,10 +81,12 @@ build {
       "echo 'Installing Prometheus node_exporter...'",
       "cd /tmp",
       "wget https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz",
-      "tar xvfz node_exporter-1.7.0.linux-amd64.tar.gz",
+      "wget https://github.com/prometheus/node_exporter/releases/download/v1.7.0/sha256sums.txt",
+      "sha256sum -c sha256sums.txt --ignore-missing",
+      "tar xzf node_exporter-1.7.0.linux-amd64.tar.gz",
       "sudo cp node_exporter-1.7.0.linux-amd64/node_exporter /usr/local/bin/",
       "sudo chmod +x /usr/local/bin/node_exporter",
-      "rm -rf node_exporter-*"
+      "rm -rf node_exporter-* sha256sums.txt"
     ]
   }
 
@@ -100,6 +102,13 @@ Type=simple
 User=ec2-user
 ExecStart=/usr/local/bin/node_exporter
 Restart=on-failure
+RestartSec=5
+
+# Security hardening
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
