@@ -68,3 +68,29 @@ output "detected_my_ip" {
   description = "Your detected public IP address"
   value       = local.my_ip_final
 }
+
+# Monitoring server outputs
+output "monitoring_public_ip" {
+  description = "Public IP of the monitoring server"
+  value       = aws_instance.monitoring.public_ip
+}
+
+output "prometheus_url" {
+  description = "URL to access Prometheus web UI"
+  value       = "http://${aws_instance.monitoring.public_ip}:9090"
+}
+
+output "grafana_url" {
+  description = "URL to access Grafana web UI"
+  value       = "http://${aws_instance.monitoring.public_ip}:3000"
+}
+
+output "grafana_credentials" {
+  description = "Default Grafana login credentials"
+  value       = "Username: admin | Password: admin (change after first login)"
+}
+
+output "monitoring_ssh_command" {
+  description = "SSH command to connect to monitoring server"
+  value       = "ssh -i ${var.ssh_private_key_path} ec2-user@${aws_instance.monitoring.public_ip}"
+}
