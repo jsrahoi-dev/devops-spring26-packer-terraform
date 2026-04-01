@@ -8,7 +8,16 @@
       "artifact_id": "us-east-1:ami-0302f27ad103a0858",
       "packer_run_uuid": "fc004170-1e59-c7f1-15fc-a9dec8777e20",
       "custom_data": null
+    },
+    {
+      "name": "amazon_linux",
+      "builder_type": "amazon-ebs",
+      "build_time": 1775029159,
+      "files": null,
+      "artifact_id": "us-east-1:ami-0b1e0bbb1f860a17f",
+      "packer_run_uuid": "6767d694-dfe2-0382-6518-49b5f3706b26",
+      "custom_data": null
     }
   ],
-  "last_run_uuid": "fc004170-1e59-c7f1-15fc-a9dec8777e20"
+  "last_run_uuid": "6767d694-dfe2-0382-6518-49b5f3706b26"
 }

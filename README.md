@@ -587,6 +587,293 @@ To minimize costs:
 - Consider using NAT instance instead of NAT Gateway for learning
 - Monitor AWS billing dashboard regularly
 
+## Monitoring with Prometheus and Grafana
+
+This project includes a comprehensive monitoring solution using Prometheus for metrics collection and Grafana for visualization.
+
+### Monitoring Architecture
+
+```
+                                    ┌─────────────────────────────────────┐
+                                    │     Public Subnet (us-east-1b)      │
+                                    │                                     │
+                                    │  ┌───────────────────────────────┐ │
+                                    │  │   Monitoring Instance         │ │
+                                    │  │   54.208.66.53               │ │
+                                    │  │                               │ │
+                                    │  │  ┌─────────────────────────┐ │ │
+                                    │  │  │   Prometheus :9090      │ │ │
+                                    │  │  │   - Metrics storage     │ │ │
+                                    │  │  │   - Time-series DB      │ │ │
+                                    │  │  │   - Service discovery   │ │ │
+                                    │  │  └─────────────────────────┘ │ │
+                                    │  │                               │ │
+                                    │  │  ┌─────────────────────────┐ │ │
+                                    │  │  │   Grafana :3000         │ │ │
+                                    │  │  │   - Dashboards          │ │ │
+                                    │  │  │   - Visualization       │ │ │
+                                    │  │  │   - Alerts              │ │ │
+                                    │  │  └─────────────────────────┘ │ │
+                                    │  └───────────────────────────────┘ │
+                                    └─────────────────────────────────────┘
+                                                     │
+                                                     │ Scrape metrics
+                                                     │ every 15s
+                                                     ▼
+                    ┌────────────────────────────────────────────────────────┐
+                    │              Private Subnets                           │
+                    │                                                        │
+                    │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐│
+                    │  │  Instance 1  │  │  Instance 2  │  │  Instance 3  ││
+                    │  │  :9100       │  │  :9100       │  │  :9100       ││
+                    │  │ node_exporter│  │ node_exporter│  │ node_exporter││
+                    │  └──────────────┘  └──────────────┘  └──────────────┘│
+                    │                                                        │
+                    │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐│
+                    │  │  Instance 4  │  │  Instance 5  │  │  Instance 6  ││
+                    │  │  :9100       │  │  :9100       │  │  :9100       ││
+                    │  │ node_exporter│  │ node_exporter│  │ node_exporter││
+                    │  └──────────────┘  └──────────────┘  └──────────────┘│
+                    └────────────────────────────────────────────────────────┘
+```
+
+### Components
+
+1. **Prometheus Server**
+   - Collects metrics from all 6 private instances
+   - Stores time-series data
+   - Provides PromQL query interface
+   - Scrapes node_exporter every 15 seconds
+   - Retention: 15 days of metrics data
+
+2. **Grafana Server**
+   - Visualizes Prometheus metrics
+   - Pre-configured dashboard for instance monitoring
+   - Shows CPU, memory, disk, and network metrics
+   - Auto-provisioned data source and dashboard
+
+3. **Node Exporter (on each private instance)**
+   - Exposes system metrics on port 9100
+   - Collects CPU, memory, disk, network stats
+   - Lightweight agent (~10MB RAM)
+
+### Data Flow
+
+1. Node exporters expose metrics on each private instance
+2. Prometheus scrapes metrics every 15 seconds
+3. Metrics stored in Prometheus time-series database
+4. Grafana queries Prometheus for visualization
+5. Dashboard updates in real-time
+
+### Accessing Monitoring Services
+
+#### Prometheus Web UI
+
+```
+URL: http://54.208.66.53:9090
+```
+
+Access Prometheus to:
+- Execute PromQL queries
+- View targets and service discovery
+- Check alerting rules
+- Browse metrics catalog
+
+#### Grafana Dashboard
+
+```
+URL: http://54.208.66.53:3000
+Username: admin
+Password: admin
+```
+
+On first login, Grafana will prompt you to change the default password.
+
+### Using Prometheus
+
+#### Prometheus Targets
+
+Navigate to `Status → Targets` to verify all 6 instances are being monitored:
+
+- Should show 6 targets in "UP" state
+- Each target shows last scrape time
+- Any issues appear with error messages
+
+#### Sample PromQL Queries
+
+Execute these queries in the Prometheus Graph interface:
+
+**CPU Usage by Instance:**
+```promql
+100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+```
+
+**Memory Usage Percentage:**
+```promql
+100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))
+```
+
+**Disk Space Available:**
+```promql
+node_filesystem_avail_bytes{mountpoint="/"}
+```
+
+**Network Traffic (received):**
+```promql
+rate(node_network_receive_bytes_total[5m])
+```
+
+**System Load Average:**
+```promql
+node_load1
+```
+
+**Uptime (in hours):**
+```promql
+(node_time_seconds - node_boot_time_seconds) / 3600
+```
+
+### Using Grafana
+
+#### Pre-configured Dashboard
+
+The "Instance Monitoring" dashboard is automatically provisioned and includes:
+
+1. **Overview Panel**
+   - Total instances monitored
+   - Average CPU usage
+   - Average memory usage
+   - Total network traffic
+
+2. **Per-Instance Metrics**
+   - CPU usage graph
+   - Memory usage graph
+   - Disk usage
+   - Network I/O
+   - System load
+
+3. **Time Range Selection**
+   - Last 5 minutes, 15 minutes, 1 hour, 6 hours, 24 hours
+   - Custom time ranges
+   - Auto-refresh options
+
+#### Creating Custom Dashboards
+
+1. Click "+" → "Dashboard" → "Add visualization"
+2. Select "Prometheus" as data source
+3. Enter PromQL query
+4. Choose visualization type (graph, gauge, stat, table)
+5. Save dashboard
+
+#### Setting Up Alerts
+
+1. Edit any panel
+2. Go to "Alert" tab
+3. Create alert rule with threshold
+4. Configure notification channels (email, Slack, etc.)
+
+### Verifying Monitoring Stack
+
+Run these checks to verify everything is working:
+
+```bash
+# Check Prometheus is scraping all targets
+curl -s http://54.208.66.53:9090/api/v1/targets | jq '.data.activeTargets[] | {instance: .labels.instance, health: .health}'
+
+# Query current CPU usage
+curl -s 'http://54.208.66.53:9090/api/v1/query?query=node_load1' | jq '.data.result[] | {instance: .metric.instance, load: .value[1]}'
+
+# Check Grafana health
+curl -s http://54.208.66.53:3000/api/health | jq
+
+# Verify all node exporters are responding
+for ip in 10.0.101.X 10.0.101.Y 10.0.102.X 10.0.102.Y 10.0.102.Z 10.0.101.Z; do
+  echo "Checking $ip..."
+  ssh -J devops-spring26-bastion ec2-user@$ip "curl -s localhost:9100/metrics | grep node_cpu_seconds_total | head -1"
+done
+```
+
+### Monitoring Screenshots
+
+#### 1. Prometheus Targets
+![Prometheus Targets](docs/screenshots/monitoring-01-prometheus-targets.png)
+*All 6 private instances showing as UP in Prometheus targets*
+
+#### 2. Prometheus Query Results
+![Prometheus Queries](docs/screenshots/monitoring-02-prometheus-queries.png)
+*PromQL query showing CPU usage across all instances*
+
+#### 3. Grafana Dashboard Overview
+![Grafana Dashboard](docs/screenshots/monitoring-03-grafana-dashboard.png)
+*Instance monitoring dashboard with all metrics*
+
+#### 4. Grafana CPU Metrics
+![CPU Metrics](docs/screenshots/monitoring-04-grafana-cpu.png)
+*Detailed CPU usage graphs per instance*
+
+#### 5. Grafana Memory Metrics
+![Memory Metrics](docs/screenshots/monitoring-05-grafana-memory.png)
+*Memory usage visualization across instances*
+
+#### 6. Grafana Data Source
+![Grafana Data Source](docs/screenshots/monitoring-06-grafana-datasource.png)
+*Auto-provisioned Prometheus data source configuration*
+
+### Troubleshooting Monitoring
+
+#### Prometheus Not Scraping Targets
+
+**Problem**: Targets show as "DOWN" in Prometheus
+
+**Solution**:
+```bash
+# Check security group allows port 9100 from monitoring instance
+# Verify node_exporter is running on private instances
+ssh -J devops-spring26-bastion ec2-user@10.0.101.X "sudo systemctl status node_exporter"
+
+# Test connectivity from monitoring instance
+ssh ec2-user@54.208.66.53 "curl -s http://10.0.101.X:9100/metrics | head"
+```
+
+#### Grafana Not Connecting to Prometheus
+
+**Problem**: Dashboard shows "No Data"
+
+**Solution**:
+1. Check Prometheus is running: `http://54.208.66.53:9090`
+2. Verify data source configuration in Grafana
+3. Test data source connection in Grafana settings
+4. Check Prometheus has data: `http://54.208.66.53:9090/graph`
+
+#### Node Exporter Not Running
+
+**Problem**: Metrics not being collected from an instance
+
+**Solution**:
+```bash
+# SSH to the instance
+ssh -J devops-spring26-bastion ec2-user@10.0.101.X
+
+# Check node_exporter status
+sudo systemctl status node_exporter
+
+# Restart if needed
+sudo systemctl restart node_exporter
+
+# Verify metrics endpoint
+curl localhost:9100/metrics | head
+```
+
+#### High Resource Usage
+
+**Problem**: Prometheus using too much memory/disk
+
+**Solution**:
+- Adjust retention period (default: 15 days)
+- Reduce scrape interval (default: 15s)
+- Edit `/etc/prometheus/prometheus.yml` on monitoring instance
+- Restart Prometheus: `sudo systemctl restart prometheus`
+
 ## Learning Outcomes
 
 By completing this project, you have:
@@ -597,14 +884,27 @@ By completing this project, you have:
 5. Practiced infrastructure-as-code principles
 6. Used AWS CLI for resource verification
 7. Documented infrastructure thoroughly
+8. Deployed and configured Prometheus for metrics collection
+9. Set up Grafana for monitoring visualization
+10. Implemented node_exporter on multiple instances
+11. Created custom PromQL queries for system metrics
+12. Configured auto-provisioned dashboards and data sources
 
 ## Additional Resources
 
+### Infrastructure as Code
 - [Packer Documentation](https://www.packer.io/docs)
 - [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 - [AWS VPC Best Practices](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-best-practices.html)
 - [AWS Bastion Host Pattern](https://aws.amazon.com/solutions/implementations/linux-bastion/)
 - [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html)
+
+### Monitoring and Observability
+- [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
+- [PromQL Query Examples](https://prometheus.io/docs/prometheus/latest/querying/examples/)
+- [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
+- [Node Exporter Guide](https://prometheus.io/docs/guides/node-exporter/)
+- [Grafana Dashboard Best Practices](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/best-practices/)
 
 ## License
 

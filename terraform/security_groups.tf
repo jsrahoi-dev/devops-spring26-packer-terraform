@@ -64,6 +64,33 @@ resource "aws_security_group" "private_sg" {
   description = "Security group for private EC2 instances - SSH from bastion only"
   vpc_id      = module.vpc.vpc_id
 
+  # SSH ingress from bastion
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+    description     = "SSH from bastion"
+  }
+
+  # Allow Prometheus to scrape node_exporter metrics
+  ingress {
+    from_port       = 9100
+    to_port         = 9100
+    protocol        = "tcp"
+    security_groups = [aws_security_group.monitoring_sg.id]
+    description     = "Allow Prometheus to scrape node_exporter metrics"
+  }
+
+  # All traffic within VPC
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [var.vpc_cidr]
+    description = "All traffic within VPC"
+  }
+
   tags = {
     Name    = "${var.project_name}-private-sg"
     Project = var.project_name
@@ -72,26 +99,4 @@ resource "aws_security_group" "private_sg" {
   lifecycle {
     create_before_destroy = true
   }
-}
-
-# Private SG: SSH ingress from bastion
-resource "aws_security_group_rule" "private_ssh_from_bastion" {
-  type                     = "ingress"
-  description              = "SSH from bastion"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.bastion_sg.id
-  security_group_id        = aws_security_group.private_sg.id
-}
-
-# Private SG: All traffic within VPC
-resource "aws_security_group_rule" "private_vpc_egress" {
-  type              = "egress"
-  description       = "All traffic within VPC"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = [var.vpc_cidr]
-  security_group_id = aws_security_group.private_sg.id
 }
