@@ -75,6 +75,53 @@ build {
     ]
   }
 
+  # Install Prometheus node_exporter
+  provisioner "shell" {
+    inline = [
+      "echo 'Installing Prometheus node_exporter...'",
+      "cd /tmp",
+      "wget https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz",
+      "tar xvfz node_exporter-1.7.0.linux-amd64.tar.gz",
+      "sudo cp node_exporter-1.7.0.linux-amd64/node_exporter /usr/local/bin/",
+      "sudo chmod +x /usr/local/bin/node_exporter",
+      "rm -rf node_exporter-*"
+    ]
+  }
+
+  # Create node_exporter systemd service
+  provisioner "file" {
+    content = <<-EOF
+[Unit]
+Description=Prometheus Node Exporter
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+ExecStart=/usr/local/bin/node_exporter
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    destination = "/tmp/node_exporter.service"
+  }
+
+  # Enable and start node_exporter service
+  provisioner "shell" {
+    inline = [
+      "echo 'Configuring node_exporter service...'",
+      "sudo mv /tmp/node_exporter.service /etc/systemd/system/",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable node_exporter",
+      "sudo systemctl start node_exporter",
+      "sleep 5",
+      "echo 'Verifying node_exporter is running...'",
+      "sudo systemctl status node_exporter --no-pager",
+      "curl -s http://localhost:9100/metrics | head -n 10"
+    ]
+  }
+
   # Set up SSH key
   provisioner "file" {
     source      = pathexpand(var.ssh_public_key_path)
