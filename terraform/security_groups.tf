@@ -85,6 +85,17 @@ resource "aws_security_group_rule" "private_ssh_from_bastion" {
   security_group_id        = aws_security_group.private_sg.id
 }
 
+# Allow Prometheus to scrape node_exporter metrics
+resource "aws_security_group_rule" "private_node_exporter_from_monitoring" {
+  type                     = "ingress"
+  description              = "Allow Prometheus to scrape node_exporter metrics"
+  from_port                = 9100
+  to_port                  = 9100
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.monitoring_sg.id
+  security_group_id        = aws_security_group.private_sg.id
+}
+
 # Private SG: All traffic within VPC
 resource "aws_security_group_rule" "private_vpc_egress" {
   type              = "egress"
