@@ -1,6 +1,6 @@
 # Security Group for Monitoring Server
 resource "aws_security_group" "monitoring_sg" {
-  name_prefix = "${var.project_name}-monitoring-"
+  name = "${var.project_name}-monitoring-sg"
   description = "Security group for monitoring server - Prometheus and Grafana"
   vpc_id      = module.vpc.vpc_id
 
@@ -31,6 +31,15 @@ resource "aws_security_group" "monitoring_sg" {
     description = "Grafana web UI"
   }
 
+  # Outbound to scrape metrics from private instances
+  egress {
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = var.private_subnet_cidrs
+    description = "Scrape node_exporter metrics"
+  }
+
   # Allow all outbound traffic
   egress {
     from_port   = 0
@@ -54,10 +63,13 @@ resource "aws_security_group" "monitoring_sg" {
 resource "aws_instance" "monitoring" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
-  subnet_id                   = module.vpc.public_subnets[0]
+  subnet_id                   = module.vpc.public_subnets[1]
   vpc_security_group_ids      = [aws_security_group.monitoring_sg.id]
   key_name                    = aws_key_pair.deployer.key_name
   associate_public_ip_address = true
+
+  # Wait for private instances to be ready
+  depends_on = [aws_instance.private]
 
   root_block_device {
     volume_type = "gp3"
@@ -77,32 +89,25 @@ resource "aws_instance" "monitoring" {
     Type    = "monitoring"
   }
 
+  connection {
+    type        = "ssh"
+    user        = "ec2-user"
+    private_key = file(pathexpand(var.ssh_private_key_path))
+    host        = self.public_ip
+  }
+
   # Create directories for monitoring stack
   provisioner "remote-exec" {
     inline = [
       "mkdir -p ~/monitoring/grafana/provisioning/datasources",
       "mkdir -p ~/monitoring/grafana/provisioning/dashboards"
     ]
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = file(pathexpand(var.ssh_private_key_path))
-      host        = self.public_ip
-    }
   }
 
   # Upload docker-compose.yml
   provisioner "file" {
     source      = "${path.module}/monitoring_configs/docker-compose.yml"
     destination = "~/monitoring/docker-compose.yml"
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = file(pathexpand(var.ssh_private_key_path))
-      host        = self.public_ip
-    }
   }
 
   # Upload Prometheus config (with private IPs templated)
@@ -111,66 +116,40 @@ resource "aws_instance" "monitoring" {
       private_ips = aws_instance.private[*].private_ip
     })
     destination = "~/monitoring/prometheus.yml"
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = file(pathexpand(var.ssh_private_key_path))
-      host        = self.public_ip
-    }
   }
 
   # Upload Grafana datasource config
   provisioner "file" {
     source      = "${path.module}/monitoring_configs/grafana/provisioning/datasources/prometheus.yml"
     destination = "~/monitoring/grafana/provisioning/datasources/prometheus.yml"
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = file(pathexpand(var.ssh_private_key_path))
-      host        = self.public_ip
-    }
   }
 
   # Upload Grafana dashboard provider config
   provisioner "file" {
     source      = "${path.module}/monitoring_configs/grafana/provisioning/dashboards/default.yml"
     destination = "~/monitoring/grafana/provisioning/dashboards/default.yml"
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = file(pathexpand(var.ssh_private_key_path))
-      host        = self.public_ip
-    }
   }
 
   # Upload Grafana dashboard JSON
   provisioner "file" {
     source      = "${path.module}/monitoring_configs/grafana/provisioning/dashboards/ec2-monitoring.json"
     destination = "~/monitoring/grafana/provisioning/dashboards/ec2-monitoring.json"
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = file(pathexpand(var.ssh_private_key_path))
-      host        = self.public_ip
-    }
   }
 
   # Start monitoring stack
   provisioner "remote-exec" {
     inline = [
-      "cd ~/monitoring",
-      "docker-compose up -d"
+      "echo 'Starting monitoring stack...'",
+      "cd /home/ec2-user/monitoring",
+      "docker-compose up -d",
+      "echo 'Waiting for services to start...'",
+      "sleep 15",
+      "docker-compose ps",
+      "echo 'Checking Prometheus health...'",
+      "curl -s http://localhost:9090/-/healthy || echo 'Prometheus not ready yet'",
+      "echo 'Checking Grafana health...'",
+      "curl -s http://localhost:3000/api/health || echo 'Grafana not ready yet'",
+      "echo 'Monitoring stack deployment complete!'"
     ]
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = file(pathexpand(var.ssh_private_key_path))
-      host        = self.public_ip
-    }
   }
 }
