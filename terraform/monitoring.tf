@@ -90,24 +90,27 @@ resource "aws_instance" "monitoring" {
   }
 
   connection {
-    type        = "ssh"
-    user        = "ec2-user"
-    private_key = file(pathexpand(var.ssh_private_key_path))
-    host        = self.public_ip
+    type  = "ssh"
+    user  = "ec2-user"
+    agent = true
+    host  = self.public_ip
   }
 
   # Create directories for monitoring stack
   provisioner "remote-exec" {
     inline = [
+      "echo 'Creating monitoring directories...'",
       "mkdir -p /home/ec2-user/monitoring/grafana/provisioning/datasources",
-      "mkdir -p /home/ec2-user/monitoring/grafana/provisioning/dashboards"
+      "mkdir -p /home/ec2-user/monitoring/grafana/provisioning/dashboards",
+      "ls -la /home/ec2-user/",
+      "echo 'Directories created successfully'"
     ]
   }
 
   # Upload docker-compose.yml
   provisioner "file" {
     source      = "${path.module}/monitoring_configs/docker-compose.yml"
-    destination = "~/monitoring/docker-compose.yml"
+    destination = "/home/ec2-user/monitoring/docker-compose.yml"
   }
 
   # Upload Prometheus config (with private IPs templated)
@@ -115,25 +118,25 @@ resource "aws_instance" "monitoring" {
     content = templatefile("${path.module}/monitoring_configs/prometheus.yml.tpl", {
       private_ips = aws_instance.private[*].private_ip
     })
-    destination = "~/monitoring/prometheus.yml"
+    destination = "/home/ec2-user/monitoring/prometheus.yml"
   }
 
   # Upload Grafana datasource config
   provisioner "file" {
     source      = "${path.module}/monitoring_configs/grafana/provisioning/datasources/prometheus.yml"
-    destination = "~/monitoring/grafana/provisioning/datasources/prometheus.yml"
+    destination = "/home/ec2-user/monitoring/grafana/provisioning/datasources/prometheus.yml"
   }
 
   # Upload Grafana dashboard provider config
   provisioner "file" {
     source      = "${path.module}/monitoring_configs/grafana/provisioning/dashboards/default.yml"
-    destination = "~/monitoring/grafana/provisioning/dashboards/default.yml"
+    destination = "/home/ec2-user/monitoring/grafana/provisioning/dashboards/default.yml"
   }
 
   # Upload Grafana dashboard JSON
   provisioner "file" {
     source      = "${path.module}/monitoring_configs/grafana/provisioning/dashboards/ec2-monitoring.json"
-    destination = "~/monitoring/grafana/provisioning/dashboards/ec2-monitoring.json"
+    destination = "/home/ec2-user/monitoring/grafana/provisioning/dashboards/ec2-monitoring.json"
   }
 
   # Start monitoring stack
