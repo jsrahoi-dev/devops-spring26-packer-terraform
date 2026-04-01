@@ -66,20 +66,20 @@ resource "aws_security_group" "private_sg" {
 
   # SSH ingress from bastion
   ingress {
-    from_port                = 22
-    to_port                  = 22
-    protocol                 = "tcp"
-    security_groups          = [aws_security_group.bastion_sg.id]
-    description              = "SSH from bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+    description     = "SSH from bastion"
   }
 
   # Allow Prometheus to scrape node_exporter metrics
   ingress {
-    from_port                = 9100
-    to_port                  = 9100
-    protocol                 = "tcp"
-    security_groups          = [aws_security_group.monitoring_sg.id]
-    description              = "Allow Prometheus to scrape node_exporter metrics"
+    from_port       = 9100
+    to_port         = 9100
+    protocol        = "tcp"
+    security_groups = [aws_security_group.monitoring_sg.id]
+    description     = "Allow Prometheus to scrape node_exporter metrics"
   }
 
   # All traffic within VPC
