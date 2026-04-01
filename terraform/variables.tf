@@ -67,6 +67,12 @@ variable "ssh_public_key_path" {
   default     = "~/.ssh/id_ed25519_jsrahoi-dev.pub"
 }
 
+variable "ssh_private_key_path" {
+  description = "Path to SSH private key for provisioner connections"
+  type        = string
+  default     = "~/.ssh/id_ed25519"
+}
+
 variable "my_ip" {
   description = "Your public IP address for SSH access (leave empty for auto-detect)"
   type        = string
