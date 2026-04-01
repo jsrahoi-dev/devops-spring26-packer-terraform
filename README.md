@@ -796,28 +796,28 @@ done
 ### Monitoring Screenshots
 
 #### 1. Prometheus Targets
-![Prometheus Targets](docs/screenshots/monitoring-01-prometheus-targets.png)
+![Prometheus Targets](docs/screenshots/09-prometheus-targets.png)
 *All 6 private instances showing as UP in Prometheus targets*
 
 #### 2. Prometheus Query Results
-![Prometheus Queries](docs/screenshots/monitoring-02-prometheus-queries.png)
+![Prometheus Queries](docs/screenshots/10-prometheus-query.png)
 *PromQL query showing CPU usage across all instances*
 
-#### 3. Grafana Dashboard Overview
-![Grafana Dashboard](docs/screenshots/monitoring-03-grafana-dashboard.png)
+#### 3. Grafana Login
+![Grafana Login](docs/screenshots/11-grafana-login.png)
+*Grafana login page (default credentials: admin/admin)*
+
+#### 4. Grafana Dashboard Overview
+![Grafana Dashboard](docs/screenshots/12-grafana-dashboard.png)
 *Instance monitoring dashboard with all metrics*
 
-#### 4. Grafana CPU Metrics
-![CPU Metrics](docs/screenshots/monitoring-04-grafana-cpu.png)
+#### 5. Grafana CPU Metrics
+![CPU Metrics](docs/screenshots/13-grafana-cpu-metrics.png)
 *Detailed CPU usage graphs per instance*
 
-#### 5. Grafana Memory Metrics
-![Memory Metrics](docs/screenshots/monitoring-05-grafana-memory.png)
+#### 6. Grafana Memory Metrics
+![Memory Metrics](docs/screenshots/14-grafana-memory-metrics.png)
 *Memory usage visualization across instances*
-
-#### 6. Grafana Data Source
-![Grafana Data Source](docs/screenshots/monitoring-06-grafana-datasource.png)
-*Auto-provisioned Prometheus data source configuration*
 
 ### Troubleshooting Monitoring
 
